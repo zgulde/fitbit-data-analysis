@@ -40,5 +40,8 @@ deploy: build ## Build the html, then add, commit changes, and push to the gh-pa
 clean: ## Clean up built files
 	rm -rf docs/*
 
+open-gh-pages: ## Open up the site in the browser
+	open https://zgulde.github.io/fitbit-data-analysis
+
 help: ## Show this help message
 	@grep -E '^[a-zA-Z._-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[34m%s\033[0m\t%s\n", $$1, $$2}' | column -ts$$'\t'

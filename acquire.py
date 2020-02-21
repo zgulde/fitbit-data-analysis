@@ -28,7 +28,7 @@
 # - a header row
 # - the data itself
 #
-# Here is an except of what a single files looks like:
+# Here is an example of what a single files looks like:
 #
 # ```
 # Foods
