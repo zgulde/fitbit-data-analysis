@@ -28,6 +28,23 @@
 # - a header row
 # - the data itself
 #
+# Here is an except of what a single files looks like:
+#
+# ```
+# Foods
+# Date,Calories In
+# "2018-04-26","0"
+# "2018-04-27","0"
+#
+# Activities
+# Date,Calories Burned,Steps,Distance,Floors,Minutes Sedentary,Minutes Lightly Active,Minutes Fairly Active,Minutes Very Active,Activity Calories
+# "2018-04-26","2,635","2,931","1.38","2","1,347","93","0","0","566"
+# "2018-04-27","3,649","9,971","4.7","19","1,158","219","46","17","1,752"
+# ```
+#
+# Notice that there are actually multiple datasets, which we'll refer to as
+# "sections" within each file, seperated by newlines.
+#
 # The sections present in each file are:
 #
 # - Foods
@@ -58,60 +75,66 @@ from os import path
 # `log` is a simple little function to help us with out logging output. It will
 # prepend a timestamp and the name of the file to any passed messages.
 def log(msg):
-    print(f'[{datetime.now()} acquire.py] {msg}')
+    print(f"[{datetime.now()} acquire.py] {msg}")
+
 
 # `Section` is a type to represent the sections of the "csv" files that we get
 # from fitbit.
-Section = NamedTuple('Section', [('title', str),
-                                 ('columns', List[str]),
-                                 ('data', List[List[str]])])
+Section = NamedTuple(
+    "Section", [("title", str), ("columns", List[str]), ("data", List[List[str]])]
+)
 
-DATA_URL = 'https://ds.codeup.com/fitbit-data.tar.gz'
-TGZ_FILE_PATH = './fitbit-data.tar.gz'
-DATA_DIR = './fitbit'
+DATA_URL = "https://ds.codeup.com/fitbit-data.tar.gz"
+TGZ_FILE_PATH = "./fitbit-data.tar.gz"
+DATA_DIR = "./fitbit"
+
 
 def process_section(section) -> Section:
-    '''
+    """
     Given a section as a big string, will extract the pieces and return a
     Section object.
-    '''
-    title, columns, *data = section.split('\n')
+    """
+    title, columns, *data = section.split("\n")
     return Section(title=title, columns=columns, data=data)
 
+
 def get_sections(fp: str) -> List[Section]:
-    '''
+    """
     Given a filepath, will return a list of the sections in that file.
-    '''
+    """
     with open(fp) as f:
         contents = f.read().strip()
     # Sections are separated by empty lines, or `\n\n`
-    return [process_section(section) for section in contents.split('\n\n')]
+    return [process_section(section) for section in contents.split("\n\n")]
+
 
 def download_data():
-    'Download the compressed data from the server'
-    log('Downloading data file')
+    "Download the compressed data from the server"
+    log("Downloading data file")
     filepath, _ = urlretrieve(DATA_URL)
     shutil.move(filepath, TGZ_FILE_PATH)
 
+
 def extract_data():
-    'Untar and uncompress the data'
-    log('Extracting files')
+    "Untar and uncompress the data"
+    log("Extracting files")
     shutil.unpack_archive(TGZ_FILE_PATH)
 
+
 def process_data_and_save_csvs():
-    '''
+    """
     Run through all the extracted data and put it into a more reasonable format,
     two output csvs.
-    '''
-    log('Processing data')
+    """
+    log("Processing data")
 
     # We'll start by getting a list of the sections in each file
-    csvfiles = [f'{DATA_DIR}/{file}' for file in os.listdir(DATA_DIR)]
+    csvfiles = [f"{DATA_DIR}/{file}" for file in os.listdir(DATA_DIR)]
     processed_files = [get_sections(file) for file in csvfiles]
 
     # We want to put all the same sections together from each file, e.g. all the
     # food sections should go together. We will use this dictionary to do so.
-    output = {'Foods': [], 'Activities': []}
+    output = {"Foods": [], "Activities": []}
 
     # After a quick look at the data, we'll just take a look at the `Foods` and
     # `Activites` sections. We can always come back later and look at the other
@@ -133,21 +156,22 @@ def process_data_and_save_csvs():
         csv_contents = [sections[0].columns]
         for section in sections:
             csv_contents += section.data
-        with open(group + '.csv', 'w') as f:
-            f.write('\n'.join(csv_contents))
+        with open(group + ".csv", "w") as f:
+            f.write("\n".join(csv_contents))
+
 
 def get_fitbit_data(cache=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    '''
+    """
     Returns the foods and activites data as data frames.
 
     By default this will use local csv files if they exist.
 
     To force a re-download and re-processing of the data, use cache=False
-    '''
-    if not path.exists('Foods.csv') or not path.exists('Activities.csv') or not cache:
+    """
+    if not path.exists("Foods.csv") or not path.exists("Activities.csv") or not cache:
         download_data()
         extract_data()
         process_data_and_save_csvs()
     else:
-        log('Reading data from local csvs')
-    return pd.read_csv('Foods.csv'), pd.read_csv('Activities.csv')
+        log("Reading data from local csvs")
+    return pd.read_csv("Foods.csv"), pd.read_csv("Activities.csv")
